@@ -5,9 +5,11 @@
 #ifndef AAPROJECT_TYPEDEFS_HPP
 #define AAPROJECT_TYPEDEFS_HPP
 
-#define numVertices 10
-#define numEdges 10
+#define PRINT_EDGES true
+#define PRINT_RESULT true
 
+extern unsigned int g_numVertices;
+extern unsigned int g_numEdges;
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> BaseGraph;
 
