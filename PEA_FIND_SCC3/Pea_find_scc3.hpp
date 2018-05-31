@@ -11,7 +11,7 @@
 #include <boost/graph/adjacency_list.hpp>
 
 #include "../typedefs.hpp"
-#include "../DoubleStack.hpp"
+#include "../DoubleStackVec.hpp"
 
 enum vertex_rIndex_t {
     vertex_rIndex
@@ -38,8 +38,8 @@ class Pea_find_scc3 {
 
 private:
     SCC3Graph scc3Graph;
-    DoubleStack vS;
-    DoubleStack iS;
+    DoubleStackVec vS;
+    DoubleStackVec iS;
     int index;
     int c;
 
