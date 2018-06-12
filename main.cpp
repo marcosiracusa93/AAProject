@@ -52,8 +52,8 @@ int main(int argc, char **argv) {
     /// Pearce's SCC algorithm
     switch (algorithm) {
         case 'p': {
+            result_stream << "*** pea_find_scc3: " << std::endl << std::endl;
             Pea_find_scc3 pea_find_scc3 = Pea_find_scc3(graph);
-
 
             boost::timer::cpu_timer timer;
 
@@ -63,19 +63,19 @@ int main(int argc, char **argv) {
 
             time_stream << times.wall << std::endl;
 
-            result_stream << std::endl << "Recorded times: " << std::endl;
-            result_stream << "  Wall(ns): " << times.wall << std::endl;
-            result_stream << "  User(ns): " << times.user << std::endl;
-            result_stream << "  System(ns): " << times.system << std::endl << std::endl;
+            result_stream << " Recorded times[ns]: " << std::endl;
+            result_stream << "  Wall: " << times.wall << std::endl;
+            result_stream << "  User: " << times.user << std::endl;
+            result_stream << "  System: " << times.system << std::endl << std::endl;
 
             unsigned int *scc3 = (unsigned int *) malloc(sizeof(unsigned int) * g_numVertices);
 
             pea_find_scc3.getSCCResult(scc3);
 
             if (PRINT_RESULT) {
-                result_stream << "pea_find_scc3: " << std::endl;
+                result_stream << " Output: " << std::endl;
                 for (int i = 0; i < g_numVertices; i++) {
-                    result_stream << i << " is in cc" << scc3[i] << std::endl;
+                    result_stream << "  " << i << " is in cc" << scc3[i] << std::endl;
                 }
             }
         }
