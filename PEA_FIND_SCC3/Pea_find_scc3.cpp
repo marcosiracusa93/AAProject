@@ -28,6 +28,7 @@ Pea_find_scc3::Pea_find_scc3(const BaseGraph &baseGraph) : scc3Graph(g_numVertic
 }
 
 void Pea_find_scc3::run() {
+
     typedef boost::graph_traits<SCC3Graph>::vertex_iterator vertex_iter;
     std::pair<vertex_iter, vertex_iter> vp;
     boost::property_map<SCC3Graph, vertex_rIndex_t>::type rIndex = boost::get(vertex_rIndex, scc3Graph);

@@ -43,6 +43,7 @@ private:
     int index;
     int c;
 
+
 public:
     Pea_find_scc3(const BaseGraph &baseGraph);
 

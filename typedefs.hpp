@@ -7,6 +7,7 @@
 
 #define PRINT_EDGES true
 #define PRINT_RESULT true
+#define PRINT_TIME_ONLY true
 
 extern unsigned int g_numVertices;
 extern unsigned int g_numEdges;
