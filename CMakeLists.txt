@@ -5,9 +5,8 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES main.cpp PEA_FIND_SCC3/Pea_find_scc3.cpp)
 
-include_directories(DoubleStack.hpp)
-include_directories(PEA_FIND_SCC3/Pea_find_scc3.hpp)
-include_directories(typedefs.hpp)
+include_directories(utilities)
+include_directories(PEA_FIND_SCC3)
 
 find_package(Boost 1.67.0 COMPONENTS timer)
 if (Boost_FOUND)

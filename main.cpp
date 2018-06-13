@@ -6,7 +6,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/timer/timer.hpp>
 
-#include "typedefs.hpp"
+#include "utilities/typedefs.hpp"
 #include "PEA_FIND_SCC3/Pea_find_scc3.hpp"
 
 extern unsigned int g_numVertices;

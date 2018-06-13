@@ -10,8 +10,8 @@
 #include <boost/graph/properties.hpp>
 #include <boost/graph/adjacency_list.hpp>
 
-#include "../typedefs.hpp"
-#include "../DoubleStackVec.hpp"
+#include "../utilities/typedefs.hpp"
+#include "../utilities/DoubleStackVec.hpp"
 
 enum vertex_rIndex_t {
     vertex_rIndex
