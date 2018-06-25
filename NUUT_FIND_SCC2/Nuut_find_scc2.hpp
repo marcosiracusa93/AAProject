@@ -11,7 +11,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <stack>
 
-#include "../typedefs.hpp"
+#include "../utilities/typedefs.hpp"
 
 
 enum vertex_scc_t {

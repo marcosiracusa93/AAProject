@@ -11,7 +11,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <stack>
 
-#include "../typedefs.hpp"
+#include "../utilities/typedefs.hpp"
 
 enum vertex_lowPt_t {
     vertex_lowPt
@@ -19,8 +19,11 @@ enum vertex_lowPt_t {
 enum vertex_lowVine_t {
     vertex_lowVine
 };
-enum vertex_inComponent_t {
-    vertex_inComponent
+enum vertex_inStack_t {
+    vertex_inStack
+};
+enum vertex_ancestor_t {
+    vertex_ancestor
 };
 
 enum vertex_number_t {
@@ -31,23 +34,23 @@ namespace boost {
     BOOST_INSTALL_PROPERTY(vertex, lowPt);
     BOOST_INSTALL_PROPERTY(vertex, lowVine);
     BOOST_INSTALL_PROPERTY(vertex, number);
-    BOOST_INSTALL_PROPERTY(vertex, inComponent); // not present in Tarjan's pseudocode but necessary in order to keep
-                                                 // track of each node's ancestors
+    BOOST_INSTALL_PROPERTY(vertex, inStack);  // tracks if each node is on the stack
 }
 
 typedef boost::property<vertex_number_t, unsigned long> Number;
 typedef boost::property<vertex_lowPt_t, unsigned long, Number> LowPt;
 typedef boost::property<vertex_lowVine_t, unsigned long, LowPt> LowVine;
-typedef boost::property<vertex_inComponent_t, bool, LowVine> InComponent;
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, InComponent> SCC1Graph;
+typedef boost::property<vertex_inStack_t, bool, LowVine> InStack;
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, InStack> SCC1Graph;
 
 
 class Tarj_find_scc1 {
 
 private:
     SCC1Graph scc1Graph;
-    int index;
+    unsigned long index;
     std::stack<long> point_stack;
+    bool *ancestor; // ancestor[w] is true iff w is the ancestor of the currently visited node
 
 public:
     Tarj_find_scc1(const BaseGraph &baseGraph);

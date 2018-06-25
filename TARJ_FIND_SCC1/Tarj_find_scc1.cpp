@@ -10,7 +10,7 @@ unsigned int g_numEdges;
 
 Tarj_find_scc1::Tarj_find_scc1(const BaseGraph &baseGraph) : scc1Graph(g_numVertices) {
 
-    boost::property_map<SCC1Graph, vertex_inComponent_t >::type inComponent = get(vertex_inComponent, scc1Graph);
+    boost::property_map<SCC1Graph, vertex_inStack_t >::type inStack = get(vertex_inStack, scc1Graph);
     boost::property_map<SCC1Graph, vertex_lowPt_t >::type lowPt = get(vertex_lowPt, scc1Graph);
     boost::property_map<SCC1Graph, vertex_lowVine_t >::type lowVine = get(vertex_lowVine, scc1Graph);
     boost::property_map<SCC1Graph, vertex_number_t >::type number = get(vertex_number, scc1Graph);
@@ -26,7 +26,7 @@ Tarj_find_scc1::Tarj_find_scc1(const BaseGraph &baseGraph) : scc1Graph(g_numVert
     // Graph properties initialization
     for (int i = 0; i < g_numVertices; i++) {
         boost::put(lowPt, i,0);
-        boost::put(inComponent, i, false);
+        boost::put(inStack, i, false);
         boost::put(lowVine, i, 0);
         boost::put(number, i, 0);
     }
@@ -35,6 +35,7 @@ Tarj_find_scc1::Tarj_find_scc1(const BaseGraph &baseGraph) : scc1Graph(g_numVert
 
     // Stack initialization
     point_stack.push(-1);   // each node is pushed on the stack at the beginning of visit()
+    ancestor = (bool *) malloc(sizeof(bool) * g_numVertices);
 }
 
 void Tarj_find_scc1::run() {
@@ -54,10 +55,12 @@ void Tarj_find_scc1::visit(long v) {
     boost::property_map<SCC1Graph, vertex_number_t>::type number = get(vertex_number, scc1Graph);
     boost::property_map<SCC1Graph, vertex_lowPt_t >::type lowPt = get(vertex_lowPt, scc1Graph);
     boost::property_map<SCC1Graph, vertex_lowVine_t >::type lowVine = get(vertex_lowVine, scc1Graph);
-    boost::property_map<SCC1Graph, vertex_inComponent_t >::type inComponent = get(vertex_inComponent, scc1Graph);
+    boost::property_map<SCC1Graph, vertex_inStack_t >::type inStack = get(vertex_inStack, scc1Graph);
 
     lowPt[v] = lowVine[v] = number[v] = ++index;
+
     point_stack.push(v);
+    inStack[v] = true;
 
     typename boost::graph_traits<SCC1Graph>::out_edge_iterator out_i, out_end;
     long w;
@@ -65,16 +68,17 @@ void Tarj_find_scc1::visit(long v) {
         w = boost::target(*out_i,scc1Graph);
 
         if (number[w] == 0) {  // w not yet visited -> (v,w) is a tree arc
+            ancestor[v] = true; // v is now the ancestor of every node in the visit trees traversing w
             visit(w);
             lowPt[v] = std::min(lowPt[v], lowPt[w]);
             lowVine[v] = std::min(lowVine[v], lowVine[w]);
         }
 
-        else if (!inComponent[w]) // w is an ancestor of v -> (v,w) is a frond
+        else if (ancestor[w]) // w is an ancestor of v -> (v,w) is a frond
                 lowPt[v] = std::min(lowPt[v], number[w]);
 
         else if (number[w] < number[v])  // (v,w) is a vine
-                if (point_stack.top() == w)
+                if (inStack[w])
                     lowVine[v] = std::min(lowVine[v], number[w]);
     }
 
@@ -82,12 +86,13 @@ void Tarj_find_scc1::visit(long v) {
         while (point_stack.top() != -1 && number[point_stack.top()] >= number[v]) {
             w = point_stack.top();
             point_stack.pop();
-            inComponent[w] = true;
+            inStack[w] = false;
             number[w] = number[v];     // not present in original algorithm, but it doesn't affect the code and
                                        // each node in the same component will eventually have the same number
         }
-        inComponent[v] = true;
+        inStack[v] = false;
     }
+    ancestor[v] = false;
 }
 
 void Tarj_find_scc1::getSCCResult(unsigned int *scc1) {
