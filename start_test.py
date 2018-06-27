@@ -1,31 +1,50 @@
 import math
 import os
 
-N = 10  # Maximum number of nodes
-M = 10  # Maximum number of arcs
-S = 5  # Stride
-T = 1  # Number of trials for each (edge, vertex) configuration
+import plotly as py
+import plotly.graph_objs as go
+import progressbar
 
-uN = int(math.floor(N / S))  # Unitary M
-uM = int(math.floor(M / S))  # Unitary M
+V = 1000  # Maximum number of vertices
+E = 1000  # Maximum number of edges
+S = 10  # Stride
+T = 10  # Number of trials for each (edge, vertex) configuration
+
+uV = int(math.floor(V / S))  # Unitary V
+uE = int(math.floor(E / S))  # Unitary E
 
 algorithm = 'p'
 
-# Declaring the uN x uM matrix storing the time measurements
-time_matrix = [0] * uN
-for i in range(uN):
-    time_matrix[i] = [0] * uM
+# Declaring the uV x uE matrix storing the time measurements
+time_matrix = [0] * uV
+for i in range(uV):
+    time_matrix[i] = [0] * uE
 
+bar = progressbar.ProgressBar(maxval=uV * uE * T,
+                              widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+
+bar.start()
 # Sum the T time measurements taken from each (vertex,edge) configuration
-for n in range(0, uN):
-    for m in range(0, uM):
+for v in range(0, uV):
+    for e in range(0, uE):
         for t in range(T):
-            cmd_string = "./cmake-build-debug/AAProject " + str((n + 1) * S) + " " + str((m + 1) * S) + " " + algorithm
-            time_matrix[n][m] += int(os.popen(cmd_string).read())
+            cmd_string = "./cmake-build-debug/AAProject " + str((v + 1) * S) + " " + str((e + 1) * S) + " " + algorithm
+            time_matrix[v][e] += int(os.popen(cmd_string).read())
+            bar.update((v + 1) * (e + 1) * (t + 1))
+bar.finish()
 
 # Divide the whole element of the matrix by T (so to get the average time)
-for n in range(0, uN):
-    for m in range(0, uM):
-        time_matrix[n][m] = int(math.ceil(time_matrix[n][m] / T))
+for v in range(0, uV):
+    for e in range(0, uE):
+        time_matrix[v][e] = int(math.ceil(time_matrix[v][e] / T))
 
-print time_matrix
+data = [go.Surface(z=time_matrix)]
+
+graph_info = "a: " + algorithm + ", V: " + str(V) + ", E: " + str(E) + ", S: " + str(S) + ", T: " + str(T)
+title = "Time performance [" + graph_info + "]"
+
+layout = go.Layout(title=title, autosize=True)
+fig = go.Figure(data=data, layout=layout)
+
+py.offline.plot(fig, filename="time_complexity_graphs/time_complexity__A" + algorithm + "V" + str(V) + "E" + str(
+    E) + "S" + str(S) + "T" + str(T) + ".html")
