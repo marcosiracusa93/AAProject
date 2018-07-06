@@ -1,50 +1,57 @@
 import math
-import os
+from subprocess import check_output
 
 import plotly as py
 import plotly.graph_objs as go
 import progressbar
 
-V = 1000  # Maximum number of vertices
-E = 1000  # Maximum number of edges
-S = 10  # Stride
-T = 10  # Number of trials for each (edge, vertex) configuration
 
-uV = int(math.floor(V / S))  # Unitary V
-uE = int(math.floor(E / S))  # Unitary E
+class Run:
+    def __init__(self, v=0, e=0, s=1, t=1, a=''):
+        self.v = v  # Maximum number of vertices
+        self.e = e  # Maximum number of edges
+        self.s = s  # Stride
+        self.t = t  # Number of trials for (edge, vertex) configuration
+        self.a = a  # Algorithm
 
-algorithm = 'p'
 
-# Declaring the uV x uE matrix storing the time measurements
-time_matrix = [0] * uV
-for i in range(uV):
-    time_matrix[i] = [0] * uE
+runs = [Run(v=10, e=10, s=1, t=10, a='p')]
 
-bar = progressbar.ProgressBar(maxval=uV * uE * T,
-                              widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
+for run in runs:
+    uV = int(math.floor(run.v / run.s))  # Unitary V
+    uE = int(math.floor(run.e / run.s))  # Unitary E
 
-bar.start()
-# Sum the T time measurements taken from each (vertex,edge) configuration
-for v in range(0, uV):
-    for e in range(0, uE):
-        for t in range(T):
-            cmd_string = "./cmake-build-debug/AAProject " + str((v + 1) * S) + " " + str((e + 1) * S) + " " + algorithm
-            time_matrix[v][e] += int(os.popen(cmd_string).read())
-            bar.update((v + 1) * (e + 1) * (t + 1))
-bar.finish()
+    # Declaring the uV x uE matrix storing the time measurements
+    time_matrix = [0] * uV
+    for i in range(uV):
+        time_matrix[i] = [0] * uE
 
-# Divide the whole element of the matrix by T (so to get the average time)
-for v in range(0, uV):
-    for e in range(0, uE):
-        time_matrix[v][e] = int(math.ceil(time_matrix[v][e] / T))
+    bar = progressbar.ProgressBar(maxval=uV * uE * run.t,
+                                  widgets=[progressbar.Bar('=', '[', ']'), ' ', progressbar.Percentage()])
 
-data = [go.Surface(z=time_matrix)]
+    bar.start()
+    # Sum the run.t time measurements taken from each (vertex,edge) configuration
+    for t in range(run.t):
+        for v in range(0, uV):
+            for e in range(0, uE):
+                time_matrix[v][e] += int(
+                    check_output(["./cmake-build-debug/AAProject", str((v + 1) * run.s), str((e + 1) * run.s), run.a]))
+                bar.update((v + 1) * (e + 1) * (t + 1))
+    bar.finish()
 
-graph_info = "a: " + algorithm + ", V: " + str(V) + ", E: " + str(E) + ", S: " + str(S) + ", T: " + str(T)
-title = "Time performance [" + graph_info + "]"
+    # Divide the whole element of the matrix by run.t (so to get the average time)
+    for v in range(0, uV):
+        for e in range(0, uE):
+            time_matrix[v][e] = int(math.ceil(time_matrix[v][e] / run.t))
 
-layout = go.Layout(title=title, autosize=True)
-fig = go.Figure(data=data, layout=layout)
+    data = [go.Surface(z=time_matrix)]
 
-py.offline.plot(fig, filename="time_complexity_graphs/time_complexity__A" + algorithm + "V" + str(V) + "E" + str(
-    E) + "S" + str(S) + "T" + str(T) + ".html")
+    graph_info = "a: " + run.a + ", V: " + str(run.v) + ", E: " + str(run.e) + ", S: " + str(run.s) + ", T: " + str(
+        run.t)
+    title = "Time performance [" + graph_info + "]"
+
+    layout = go.Layout(title=title, autosize=True)
+    fig = go.Figure(data=data, layout=layout)
+
+    py.offline.plot(fig, filename="time_complexity_graphs/time_complexity__A" + run.a + "V" + str(run.v) + "E" + str(
+        run.e) + "S" + str(run.s) + "T" + str(run.t) + ".html")
