@@ -8,6 +8,7 @@ set(SOURCE_FILES main.cpp PEA_FIND_SCC3/Pea_find_scc3.cpp)
 include_directories(utilities)
 include_directories(PEA_FIND_SCC3)
 
+# The environment variable "BOOST_ROOT=/usr/local/boost_1_67_0" needs to be set
 find_package(Boost 1.67.0 COMPONENTS timer)
 if (Boost_FOUND)
     message(STATUS "Boost include directory: " ${Boost_INCLUDE_DIRS})
