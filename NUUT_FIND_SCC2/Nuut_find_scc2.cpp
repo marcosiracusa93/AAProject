@@ -5,10 +5,7 @@
 #include <iostream>
 #include "Nuut_find_scc2.hpp"
 
-unsigned int g_numVertices;
-unsigned int g_numEdges;
-
-Nuut_find_scc2::Nuut_find_scc2(const BaseGraph &baseGraph) : scc2Graph(g_numVertices) {
+Nuut_find_scc2::Nuut_find_scc2(const BaseGraph &baseGraph, unsigned int g_numVertices) : scc2Graph(g_numVertices) {
 
     boost::property_map<SCC2Graph, vertex_inComponent_t >::type inComponent = get(vertex_inComponent, scc2Graph);
     boost::property_map<SCC2Graph, vertex_vRoot_t >::type root = get(vertex_vRoot, scc2Graph);

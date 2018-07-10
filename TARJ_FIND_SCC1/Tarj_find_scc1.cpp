@@ -5,10 +5,7 @@
 #include <iostream>
 #include "Tarj_find_scc1.hpp"
 
-unsigned int g_numVertices;
-unsigned int g_numEdges;
-
-Tarj_find_scc1::Tarj_find_scc1(const BaseGraph &baseGraph) : scc1Graph(g_numVertices) {
+Tarj_find_scc1::Tarj_find_scc1(const BaseGraph &baseGraph, unsigned int g_numVertices) : scc1Graph(g_numVertices) {
 
     boost::property_map<SCC1Graph, vertex_inStack_t >::type inStack = get(vertex_inStack, scc1Graph);
     boost::property_map<SCC1Graph, vertex_lowPt_t >::type lowPt = get(vertex_lowPt, scc1Graph);

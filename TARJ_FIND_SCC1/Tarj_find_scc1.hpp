@@ -53,7 +53,7 @@ private:
     bool *ancestor; // ancestor[w] is true iff w is the ancestor of the currently visited node
 
 public:
-    Tarj_find_scc1(const BaseGraph &baseGraph);
+    Tarj_find_scc1(const BaseGraph &baseGraph, unsigned int g_numVertices);
 
     void run();
 

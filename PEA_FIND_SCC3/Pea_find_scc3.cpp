@@ -5,11 +5,9 @@
 #include <iostream>
 #include "Pea_find_scc3.hpp"
 
-unsigned int g_numVertices;
-unsigned int g_numEdges;
-
-Pea_find_scc3::Pea_find_scc3(const BaseGraph &baseGraph) : scc3Graph(g_numVertices), vS(g_numEdges), iS(g_numEdges),
-                                                           index(1), c(g_numVertices - 1) {
+Pea_find_scc3::Pea_find_scc3(const BaseGraph &baseGraph, unsigned int g_numVertices, unsigned int g_numEdges) : 
+                                                            scc3Graph(g_numVertices), vS(g_numEdges), iS(g_numEdges),
+                                                            index(1), c(g_numVertices - 1) {
 
     boost::property_map<SCC3Graph, vertex_rIndex_t>::type rIndex = get(vertex_rIndex, scc3Graph);
     boost::property_map<SCC3Graph, vertex_isRoot_t>::type isRoot = get(vertex_isRoot, scc3Graph);
@@ -119,7 +117,6 @@ void Pea_find_scc3::finishVisiting(int v) {
 
 bool Pea_find_scc3::beginEdge(int v, int k) {
     boost::property_map<SCC3Graph, vertex_rIndex_t>::type rIndex = boost::get(vertex_rIndex, scc3Graph);
-    boost::property_map<SCC3Graph, vertex_isRoot_t>::type isRoot = boost::get(vertex_isRoot, scc3Graph);
 
     unsigned int w = getTargetVertex(v, k);
     if (rIndex[w] == 0) {

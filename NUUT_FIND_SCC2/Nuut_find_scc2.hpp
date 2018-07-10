@@ -31,8 +31,8 @@ namespace boost {
     BOOST_INSTALL_PROPERTY(vertex, inComponent);
 }
 
-typedef boost::property<vertex_scc_t, unsigned int> Scc; // additional vector that orders vertices according to visit time
-typedef boost::property<vertex_vRoot_t, long, Scc> VRoot;
+typedef boost::property<vertex_scc_t, unsigned int> VScc; // additional vector that orders vertices according to visit time
+typedef boost::property<vertex_vRoot_t, long, VScc> VRoot;
 typedef boost::property<vertex_inComponent_t, bool, VRoot> InComponent;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, InComponent> SCC2Graph;
 
@@ -45,7 +45,7 @@ private:
 
 
 public:
-    Nuut_find_scc2(const BaseGraph &baseGraph);
+    Nuut_find_scc2(const BaseGraph &baseGraph, unsigned int g_numVertices);
 
     void run();
 
