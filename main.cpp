@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     graph.clear();
     boost::mt19937 rng;
     rng.seed(uint32_t(time(0)));
-    boost::generate_random_graph(graph, g_numVertices, g_numEdges, rng, true, true);
+    boost::generate_random_graph(graph, g_numVertices, g_numEdges, rng, false, true);
 
     // Optionally print edges in the result_stream
     if (PRINT_EDGES) {
