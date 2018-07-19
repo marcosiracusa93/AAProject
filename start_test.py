@@ -8,19 +8,20 @@ import numpy as np
 
 
 class Run:
-    def __init__(self, v=0, e=0, s=1, t=1, a=''):
+    def __init__(self, v=0, e=0, sv=1, se=100, t=1, a=''):
         self.v = v  # Maximum number of vertices
         self.e = e  # Maximum number of edges
-        self.s = s  # Stride
+        self.sv = sv  # Stride
+        self.se = se
         self.t = t  # Number of trials for (edge, vertex) configuration
         self.a = a  # Algorithm
 
 
-runs = [Run(v=10, e=10, s=1, t=10, a='p')]
+runs = [Run(v=50, e=300, sv=1, se=3, t=10, a='n')]
 
 for run in runs:
-    uV = int(math.floor(run.v / run.s))  # Unitary V
-    uE = int(math.floor(run.e / run.s))  # Unitary E
+    uV = int(math.floor(run.v / run.sv))  # Unitary V
+    uE = int(math.floor(run.e / run.se))  # Unitary E
 
     # Declaring the uV x uE matrix storing the time measurements
     time_matrix = [0] * uV
@@ -40,11 +41,11 @@ for run in runs:
         for v in range(0, uV):
             for e in range(0, uE):
 
-                output = int(check_output(["./cmake-build-debug/AAProject", str((v + 1) * run.s), str((e + 1) * run.s), run.a]))
+                output = int(check_output(["./cmake-build-debug/AAProject", str((v + 1) * run.sv), str((e + 1) * run.se), run.a]))
 
                 # updating matrices for least squares
-                phi[(uE*v)+e, 0] = (v + 1) * run.s
-                phi[(uE*v)+e, 1] = (e + 1) * run.s
+                phi[(uE*v)+e, 0] = (v + 1) * run.sv
+                phi[(uE*v)+e, 1] = (e + 1) * run.se
                 y[(uE*v)+e] += output
 
                 # updating time matrix
@@ -58,19 +59,21 @@ for run in runs:
         for e in range(0, uE):
             time_matrix[v][e] = int(math.ceil(time_matrix[v][e] / run.t))
 
-    data = [go.Surface(z=time_matrix)]
+    ls_result = ((np.matrix(phi).T * np.matrix(phi)).I * np.matrix(phi).T) * y
+    ls = "complexity: " + str(int(ls_result[0]/run.t)) + "*V + " + str(int(ls_result[1]/run.t)) + "*E"
 
-    graph_info = "a: " + run.a + ", V: " + str(run.v) + ", E: " + str(run.e) + ", S: " + str(run.s) + ", T: " + str(
-        run.t)
-    title = "Time performance [" + graph_info + "]"
+    data = [go.Surface(z=np.matrix(time_matrix).T)]
+
+    graph_info = "a: " + run.a + ", V: " + str(run.v) + ", E: " + str(run.e) + \
+                 ", SV: " + str(run.sv) + ", SE: " + str(run.se) + ", T: " + str(run.t)
+    title = "Time performance [" + graph_info + "] -> " + ls
 
     layout = go.Layout(title=title, autosize=True)
+
     fig = go.Figure(data=data, layout=layout)
 
     py.offline.plot(fig, filename="time_complexity_graphs/time_complexity__A" + run.a + "V" + str(run.v) + "E" + str(
-        run.e) + "S" + str(run.s) + "T" + str(run.t) + ".html")
+        run.e) + ", SV: " + str(run.sv) + ", SE: " + str(run.se) + "T" + str(run.t) + ".html")
 
-    ls_result = ((np.matrix(phi).T * np.matrix(phi)).I * np.matrix(phi).T) * y
-    print(run.a + ": complexity estimated with least squares: " + str(ls_result[0]/run.t) + "*V + "
-          + str(ls_result[1]/run.t) + "*E")
+
 
