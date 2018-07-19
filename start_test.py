@@ -11,13 +11,18 @@ class Run:
     def __init__(self, v=0, e=0, sv=1, se=100, t=1, a=''):
         self.v = v  # Maximum number of vertices
         self.e = e  # Maximum number of edges
-        self.sv = sv  # Stride
-        self.se = se
+        self.sv = sv  # Vertices' stride
+        self.se = se  # Edges' stride
         self.t = t  # Number of trials for (edge, vertex) configuration
         self.a = a  # Algorithm
 
 
-runs = [Run(v=50, e=300, sv=1, se=3, t=10, a='n')]
+runs = [Run(v=500, e=2500, sv=1, se=1, t=10, a='t'),
+        Run(v=2000, e=15000, sv=10, se=50, t=10, a='t'),
+        Run(v=500, e=2500, sv=1, se=1, t=10, a='n'),
+        Run(v=2000, e=15000, sv=10, se=50, t=10, a='n'),
+        Run(v=500, e=2500, sv=1, se=1, t=10, a='p'),
+        Run(v=2000, e=15000, sv=10, se=50, t=10, a='p')]
 
 for run in runs:
     uV = int(math.floor(run.v / run.sv))  # Unitary V
