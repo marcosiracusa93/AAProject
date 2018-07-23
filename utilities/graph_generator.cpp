@@ -3,10 +3,11 @@
 //
 
 #include "iostream"
-#include "typedefs.hpp"
 #include <boost/graph/random.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/graph/graphml.hpp>
+
+#include "typedefs.hpp"
 
 //void write_graph(BaseGraph g);
 

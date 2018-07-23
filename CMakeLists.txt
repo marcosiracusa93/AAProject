@@ -24,3 +24,5 @@ add_executable(AAProject ${SOURCE_FILES})
 add_executable(graphGenerator utilities/graph_generator.cpp)
 
 target_link_libraries(AAProject ${Boost_LIBRARIES})
+
+target_link_libraries(graphGenerator ${Boost_LIBRARIES})
