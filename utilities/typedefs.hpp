@@ -5,9 +5,10 @@
 #ifndef AAPROJECT_TYPEDEFS_HPP
 #define AAPROJECT_TYPEDEFS_HPP
 
-#define PRINT_EDGES true
-#define PRINT_RESULT true
-#define PRINT_TIME_ONLY true
+#define PRINT_EDGES false
+#define PRINT_RESULT false
+#define PRINT_VERBOSE false
+#define PRINT_MEASUREMENTS true
 #define TRACK_STACK_CONSUMPTION true
 
 extern unsigned int g_numVertices;

@@ -39,8 +39,9 @@ Pea_find_scc3::Pea_find_scc3(const BaseGraph &baseGraph, unsigned int g_numVerti
 
 void Pea_find_scc3::run() {
 
+    unsigned long long init_sp = 0;
     if (TRACK_STACK_CONSUMPTION) {
-        unsigned long long init_sp = get_sp();
+        init_sp = get_sp();
         min_sp = init_sp;
     }
 

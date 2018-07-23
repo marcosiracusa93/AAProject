@@ -19,9 +19,7 @@ unsigned int g_numEdges;
 
 int main(int argc, char **argv) {
 
-    std::stringstream result_stream;
-    std::stringstream t_result_stream;
-    std::stringstream n_result_stream;
+    std::stringstream verbose_stream;
     std::stringstream measurements_stream;
 
     // Check input consistency
@@ -50,9 +48,9 @@ int main(int argc, char **argv) {
     rng.seed(uint32_t(time(0)));
     boost::generate_random_graph(graph, g_numVertices, g_numEdges, rng, false, true);
 
-    // Optionally print edges in the result_stream
+    // Optionally print edges in the verbose_stream
     if (PRINT_EDGES) {
-        result_stream << std::endl << "edges(g) = ";
+        verbose_stream << std::endl << "edges(g) = ";
 
         // Instantiate property map for accessing the index id
         boost::property_map<BaseGraph, boost::vertex_index_t>::type vertex_id = boost::get(boost::vertex_index, graph);
@@ -61,17 +59,21 @@ int main(int argc, char **argv) {
 
         // Iterate through the edges and print
         for (boost::tie(ei, ei_end) = boost::edges(graph); ei != ei_end; ++ei) {
-            result_stream << "(" << get(vertex_id, source(*ei, graph))
-                          << "," << get(vertex_id, target(*ei, graph)) << ") ";
+            verbose_stream << "(" << get(vertex_id, source(*ei, graph))
+                           << "," << get(vertex_id, target(*ei, graph)) << ") ";
         }
 
-        result_stream << std::endl << std::endl;
+        verbose_stream << std::endl << std::endl;
     }
 
     std::string algorithm_name;
 
-    // Allocate room for the result (a uint, the connected component, for each vertex)
-    unsigned int *scc_result = (unsigned int *) malloc(sizeof(unsigned int) * g_numVertices);
+    unsigned int *scc_result = nullptr;
+
+    if (PRINT_RESULT) {
+        // Allocate room for the result (a uint, the connected component, for each vertex)
+        scc_result = (unsigned int *) malloc(sizeof(unsigned int) * g_numVertices);
+    }
 
     unsigned long long stack_dimension = 0;
     boost::timer::cpu_times times;
@@ -98,8 +100,10 @@ int main(int argc, char **argv) {
             // Get stack dimension
             stack_dimension = scc_algorithm.getStackDimension();
 
-            // Get result
-            scc_algorithm.getSCCResult(scc_result);
+            if (PRINT_RESULT) {
+                // Get result
+                scc_algorithm.getSCCResult(scc_result);
+            }
             break;
         }
 
@@ -115,7 +119,10 @@ int main(int argc, char **argv) {
 
             times = timer.elapsed();
 
-            scc_algorithm.getSCCResult(scc_result);
+            if (PRINT_RESULT) {
+                // Get result
+                scc_algorithm.getSCCResult(scc_result);
+            }
             break;
         }
 
@@ -131,7 +138,10 @@ int main(int argc, char **argv) {
 
             times = timer.elapsed();
 
-            scc_algorithm.getSCCResult(scc_result);
+            if (PRINT_RESULT) {
+                // Get result
+                scc_algorithm.getSCCResult(scc_result);
+            }
             break;
         }
 
@@ -140,43 +150,53 @@ int main(int argc, char **argv) {
             exit(-1);
     }
 
-    result_stream << "*** " << algorithm_name << "_find_scc: " << std::endl << std::endl;
+    if (PRINT_VERBOSE && PRINT_MEASUREMENTS) {
+        std::cout << "Cannot print both whole data and measurements" << std::endl;
+        exit(-1);
+    }
 
-    boost::property_tree::ptree root;
-    root.put("elapsed_time", times.wall);
-    root.put("stack_dimension", stack_dimension);
+    // Select the stream according on what the user wants to print:
+    //  - measurements_stream    -> time and stack consumption (to be used with the script)
+    //  - verbose_stream  -> wall, user and system time of the current run, stack consumption and, optionally, the algorithm's result
 
-    std::stringstream sstream;
 
-    boost::property_tree::write_json(sstream, root);
+    if (PRINT_MEASUREMENTS) {
+        boost::property_tree::ptree root;
+        root.put("elapsed_time", times.wall);
+        root.put("stack_dimension", stack_dimension);
 
-    // Save wall time in the measurements_stream
-    measurements_stream << sstream.str() << std::endl;
+        std::stringstream sstream;
 
-    // Print times in the result_stream
-    result_stream << " Recorded times[ns]: " << std::endl;
-    result_stream << "  Wall: " << times.wall << std::endl;
-    result_stream << "  User: " << times.user << std::endl;
-    result_stream << "  System: " << times.system << std::endl << std::endl;
+        boost::property_tree::write_json(sstream, root);
 
-    // Optionally print the result (just the time would be print otherwise)
-    if (PRINT_RESULT) {
+        // Save wall time and stack consumption in the measurements_stream
+        measurements_stream << sstream.str() << std::endl;
 
-        for (int i = 0; i < g_numVertices; i++)
-            result_stream << "  " << i << " is in cc" << scc_result[i] << std::endl;
+        std::cout << measurements_stream.str();
+    }
 
-        // Free memory allocated for results
-        free(scc_result);
+    if (PRINT_VERBOSE) {
+        verbose_stream << "*** " << algorithm_name << "_find_scc: " << std::endl << std::endl;
 
-        // Select the stream according on what the user wants to print:
-        //  - measurements_stream    -> time only (to be used with the script)
-        //  - result_stream  -> wall, user and system time of the current run and, optionally, the algorithm's result
-        if (PRINT_TIME_ONLY) {
-            std::cout << measurements_stream.str();
-        } else {
-            std::cout << result_stream.str();
+        // Print times in the verbose_stream
+        verbose_stream << " Recorded times[ns]: " << std::endl;
+        verbose_stream << "  Wall: " << times.wall << std::endl;
+        verbose_stream << "  User: " << times.user << std::endl;
+        verbose_stream << "  System: " << times.system << std::endl << std::endl;
+
+        verbose_stream << " Stack consumption: " << stack_dimension << std::endl << std::endl;
+
+        // Optionally print the result
+        if (PRINT_RESULT) {
+            for (int i = 0; i < g_numVertices; i++)
+                verbose_stream << "  " << i << " is in cc" << scc_result[i] << std::endl;
+
+            // Free memory allocated for results
+            free(scc_result);
         }
 
+        std::cout << verbose_stream.str();
     }
+
     return 0;
 }
