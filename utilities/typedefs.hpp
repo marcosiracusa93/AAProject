@@ -8,6 +8,7 @@
 #define PRINT_EDGES true
 #define PRINT_RESULT true
 #define PRINT_TIME_ONLY true
+#define TRACK_STACK_CONSUMPTION true
 
 extern unsigned int g_numVertices;
 extern unsigned int g_numEdges;

@@ -5,9 +5,21 @@
 #include <iostream>
 #include "Pea_find_scc3.hpp"
 
-Pea_find_scc3::Pea_find_scc3(const BaseGraph &baseGraph, unsigned int g_numVertices, unsigned int g_numEdges) : 
-                                                            scc3Graph(g_numVertices), vS(g_numEdges), iS(g_numEdges),
-                                                            index(1), c(g_numVertices - 1) {
+unsigned long long min_sp = 0;
+
+unsigned long long get_sp(void) {
+    volatile unsigned long long var = 0;
+    return (unsigned long long) &var + 24;
+}
+
+void update_max_sp(void) {
+    min_sp = std::min(min_sp, get_sp());
+}
+
+
+Pea_find_scc3::Pea_find_scc3(const BaseGraph &baseGraph, unsigned int g_numVertices, unsigned int g_numEdges) :
+        scc3Graph(g_numVertices), vS(g_numEdges), iS(g_numEdges),
+        index(1), c(g_numVertices - 1), stack_dimension(0) {
 
     boost::property_map<SCC3Graph, vertex_rIndex_t>::type rIndex = get(vertex_rIndex, scc3Graph);
     boost::property_map<SCC3Graph, vertex_isRoot_t>::type isRoot = get(vertex_isRoot, scc3Graph);
@@ -27,6 +39,11 @@ Pea_find_scc3::Pea_find_scc3(const BaseGraph &baseGraph, unsigned int g_numVerti
 
 void Pea_find_scc3::run() {
 
+    if (TRACK_STACK_CONSUMPTION) {
+        unsigned long long init_sp = get_sp();
+        min_sp = init_sp;
+    }
+
     typedef boost::graph_traits<SCC3Graph>::vertex_iterator vertex_iter;
     std::pair<vertex_iter, vertex_iter> vp;
     boost::property_map<SCC3Graph, vertex_rIndex_t>::type rIndex = boost::get(vertex_rIndex, scc3Graph);
@@ -37,6 +54,11 @@ void Pea_find_scc3::run() {
             visit(boost::get(vertex_id, *vp.first));
         }
     }
+
+    if (TRACK_STACK_CONSUMPTION) {
+        update_max_sp();
+        stack_dimension = init_sp - min_sp;
+    }
 }
 
 void Pea_find_scc3::visit(int v) {
@@ -45,6 +67,9 @@ void Pea_find_scc3::visit(int v) {
     while (!vS.isEmptyFront()) {
         visitLoop();
     }
+
+    if (TRACK_STACK_CONSUMPTION)
+        update_max_sp();
 }
 
 void Pea_find_scc3::visitLoop() {
@@ -58,7 +83,7 @@ void Pea_find_scc3::visitLoop() {
     typename GraphTraits::out_edge_iterator out_i, out_end;
     typename GraphTraits::edge_descriptor e;
 
-    // Count out-endges
+    // Count out-edges
     int out_count = 0;
     for (std::tie(out_i, out_end) = boost::out_edges(v, scc3Graph); out_i != out_end; ++out_i) {
         out_count++;
@@ -79,6 +104,9 @@ void Pea_find_scc3::visitLoop() {
 
     // Finished traversing out edges, update component info
     finishVisiting(v);
+
+    if (TRACK_STACK_CONSUMPTION)
+        update_max_sp();
 }
 
 void Pea_find_scc3::beginVisiting(int v) {
@@ -91,6 +119,9 @@ void Pea_find_scc3::beginVisiting(int v) {
     isRoot[v] = true;
     rIndex[v] = index;
     index = index + 1;
+
+    if (TRACK_STACK_CONSUMPTION)
+        update_max_sp();
 }
 
 void Pea_find_scc3::finishVisiting(int v) {
@@ -113,6 +144,9 @@ void Pea_find_scc3::finishVisiting(int v) {
     } else {
         vS.pushBack(v);
     }
+
+    if (TRACK_STACK_CONSUMPTION)
+        update_max_sp();
 }
 
 bool Pea_find_scc3::beginEdge(int v, int k) {
@@ -123,8 +157,13 @@ bool Pea_find_scc3::beginEdge(int v, int k) {
         iS.popFront();
         iS.pushFront(k + 1);
         beginVisiting(w);
+
+        if (TRACK_STACK_CONSUMPTION)
+            update_max_sp();
         return true;
     } else {
+        if (TRACK_STACK_CONSUMPTION)
+            update_max_sp();
         return false;
     }
 
@@ -141,6 +180,8 @@ void Pea_find_scc3::finishEdge(int v, int k) {
         isRoot[v] = false;
     }
 
+    if (TRACK_STACK_CONSUMPTION)
+        update_max_sp();
 }
 
 unsigned int Pea_find_scc3::getTargetVertex(int v, int k) {
@@ -160,6 +201,9 @@ unsigned int Pea_find_scc3::getTargetVertex(int v, int k) {
         out_count++;
     }
 
+    if (TRACK_STACK_CONSUMPTION)
+        update_max_sp();
+
     return w;
 }
 
@@ -173,4 +217,8 @@ void Pea_find_scc3::getSCCResult(unsigned int *scc3) {
     for (vp = boost::vertices(scc3Graph), i = 0; vp.first != vp.second; ++vp.first, i++) {
         scc3[i] = boost::get(rIndex, *vp.first);
     }
+}
+
+unsigned long long Pea_find_scc3::getStackDimension() {
+    return stack_dimension;
 }

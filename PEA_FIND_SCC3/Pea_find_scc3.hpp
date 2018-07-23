@@ -42,6 +42,7 @@ private:
     DoubleStackVec iS;
     int index;
     int c;
+    unsigned long long stack_dimension;
 
 
 public:
@@ -50,6 +51,8 @@ public:
     void run();
 
     void getSCCResult(unsigned int *scc3);
+
+    unsigned long long getStackDimension();
 
 private:
     void visit(int v);

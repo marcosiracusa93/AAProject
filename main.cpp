@@ -6,6 +6,9 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/timer/timer.hpp>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 #include "utilities/typedefs.hpp"
 #include "PEA_FIND_SCC3/Pea_find_scc3.hpp"
 #include "TARJ_FIND_SCC1/Tarj_find_scc1.hpp"
@@ -19,7 +22,7 @@ int main(int argc, char **argv) {
     std::stringstream result_stream;
     std::stringstream t_result_stream;
     std::stringstream n_result_stream;
-    std::stringstream time_stream;
+    std::stringstream measurements_stream;
 
     // Check input consistency
     if (argc != 4) {
@@ -70,6 +73,7 @@ int main(int argc, char **argv) {
     // Allocate room for the result (a uint, the connected component, for each vertex)
     unsigned int *scc_result = (unsigned int *) malloc(sizeof(unsigned int) * g_numVertices);
 
+    unsigned long long stack_dimension = 0;
     boost::timer::cpu_times times;
     times.clear();
 
@@ -90,6 +94,9 @@ int main(int argc, char **argv) {
 
             // Stop timer
             times = timer.elapsed();
+
+            // Get stack dimension
+            stack_dimension = scc_algorithm.getStackDimension();
 
             // Get result
             scc_algorithm.getSCCResult(scc_result);
@@ -135,8 +142,16 @@ int main(int argc, char **argv) {
 
     result_stream << "*** " << algorithm_name << "_find_scc: " << std::endl << std::endl;
 
-    // Save wall time in the time_stream
-    time_stream << times.wall << std::endl;
+    boost::property_tree::ptree root;
+    root.put("elapsed_time", times.wall);
+    root.put("stack_dimension", stack_dimension);
+
+    std::stringstream sstream;
+
+    boost::property_tree::write_json(sstream, root);
+
+    // Save wall time in the measurements_stream
+    measurements_stream << sstream.str() << std::endl;
 
     // Print times in the result_stream
     result_stream << " Recorded times[ns]: " << std::endl;
@@ -154,10 +169,10 @@ int main(int argc, char **argv) {
         free(scc_result);
 
         // Select the stream according on what the user wants to print:
-        //  - time_stream    -> time only (to be used with the script)
+        //  - measurements_stream    -> time only (to be used with the script)
         //  - result_stream  -> wall, user and system time of the current run and, optionally, the algorithm's result
         if (PRINT_TIME_ONLY) {
-            std::cout << time_stream.str();
+            std::cout << measurements_stream.str();
         } else {
             std::cout << result_stream.str();
         }
