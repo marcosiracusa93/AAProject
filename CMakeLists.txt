@@ -16,9 +16,11 @@ if (Boost_FOUND)
     message(STATUS "Boost include directory: " ${Boost_INCLUDE_DIRS})
     include_directories(${Boost_INCLUDE_DIRS})
 else ()
-    messsage(FATAL_ERROR "Boost not foud!")
+    messsage(FATAL_ERROR "Boost not found!")
 endif ()
 
 add_executable(AAProject ${SOURCE_FILES})
+
+add_executable(graphGenerator utilities/graph_generator.cpp)
 
 target_link_libraries(AAProject ${Boost_LIBRARIES})
