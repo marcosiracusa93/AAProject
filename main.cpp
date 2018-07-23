@@ -5,6 +5,7 @@
 #include <boost/graph/random.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/timer/timer.hpp>
+#include <boost/graph/graphml.hpp>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -16,6 +17,7 @@
 
 unsigned int g_numVertices;
 unsigned int g_numEdges;
+std::string g_path;
 
 int main(int argc, char **argv) {
 
@@ -23,30 +25,29 @@ int main(int argc, char **argv) {
     std::stringstream measurements_stream;
 
     // Check input consistency
-    if (argc != 4) {
+    if (argc != 5) {
         std::cout << "Wrong format. Expected parameters: " << std::endl;
         std::cout << " 1. number of vertices" << std::endl;
         std::cout << " 2. number of edges" << std::endl;
-        std::cout << " 3. selected algorithm" << std::endl;
+        std::cout << " 3. file path" << std::endl;
+        std::cout << " 4. selected algorithm" << std::endl;
         exit(-1);
     }
 
     // Get num edges and vertices (which actually are global variables)
     g_numVertices = (unsigned int) strtol(argv[1], NULL, 10);
     g_numEdges = (unsigned int) strtol(argv[2], NULL, 10);
-
+    g_path = argv[3];
 
     // Get the id of the algorithm the user wants to run
-    char algorithm = argv[3][0];
+    char algorithm = argv[4][0];
 
-    // Create the graph
-    BaseGraph graph(g_numVertices);
-
-    // Randomize the graph
-    graph.clear();
-    boost::mt19937 rng;
-    rng.seed(uint32_t(time(0)));
-    boost::generate_random_graph(graph, g_numVertices, g_numEdges, rng, false, true);
+    // Read the graph from .xml file
+    std::ifstream inputGraph;
+    BaseGraph graph;
+    inputGraph.open(g_path, std::ifstream::in);
+    boost::dynamic_properties dp;
+    boost::read_graphml(inputGraph, graph, dp);
 
     // Optionally print edges in the verbose_stream
     if (PRINT_EDGES) {
