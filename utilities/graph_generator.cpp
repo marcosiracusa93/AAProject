@@ -6,17 +6,22 @@
 #include <boost/graph/random.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/graph/graphml.hpp>
-
 #include "typedefs.hpp"
 
-//void write_graph(BaseGraph g);
+void write_graph(BaseGraph g, std::string path) {
+    std::ofstream out;
+    boost::dynamic_properties dp;
+    out.open(path);
+    boost::write_graphml(out, g, dp);
+    out.close();
+}
 
 int main(int argc, char **argv) {
     if (argc != 4) {
         std::cout << "Wrong format. Expected parameters: " << std::endl;
         std::cout << " 1. number of vertices" << std::endl;
         std::cout << " 2. number of edges" << std::endl;
-        std::cout << " 3. selected algorithm" << std::endl;
+        std::cout << " 3. graph file path" << std::endl;
         exit(-1);
     }
 
@@ -26,7 +31,7 @@ int main(int argc, char **argv) {
 
 
     // Get the id of the algorithm the user wants to run
-    char algorithm = argv[3][0];
+    std::string path = argv[3];
 
     // Create the graph
     BaseGraph graph(g_numVertices);
@@ -37,17 +42,9 @@ int main(int argc, char **argv) {
     rng.seed(uint32_t(time(0)));
     boost::generate_random_graph(graph, g_numVertices, g_numEdges, rng, false, true);
 
-   // write_graph(graph);
-
+    write_graph(graph, path);
     return 0;
 }
 
-/*void write_graph(BaseGraph g) {
-    std::ofstream out;
-    boost::dynamic_properties dp;
-    out.open("graph.xml");
-    boost::write_graphml(out, g, dp);
 
-    void read_graph(
-}*/
 
