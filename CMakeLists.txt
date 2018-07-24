@@ -11,12 +11,12 @@ include_directories(NUUT_FIND_SCC2)
 include_directories(TARJ_FIND_SCC1)
 
 # The environment variable "BOOST_ROOT=/usr/local/boost_1_67_0" needs to be set
-find_package(Boost 1.67.0 COMPONENTS timer)
+find_package(Boost 1.67.0 COMPONENTS timer graph)
 if (Boost_FOUND)
     message(STATUS "Boost include directory: " ${Boost_INCLUDE_DIRS})
     include_directories(${Boost_INCLUDE_DIRS})
 else ()
-    messsage(FATAL_ERROR "Boost not found!")
+    message(FATAL_ERROR "Boost not found!")
 endif ()
 
 add_executable(AAProject ${SOURCE_FILES})

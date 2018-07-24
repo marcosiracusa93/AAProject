@@ -146,6 +146,11 @@ int main(int argc, char **argv) {
             break;
         }
 
+        case 's': { /// Skip
+            /// This case is only meant to run the main() in order to record its space complexity
+            return 0;
+        }
+
         default:
             std::cout << "Wrong algorithm" << std::endl;
             exit(-1);
