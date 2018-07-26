@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 
     boost::timer::cpu_timer timer;
 
-    //scc_algorithm.run();
+    scc_algorithm.run();
 
     times = timer.elapsed();
 
