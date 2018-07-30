@@ -46,7 +46,7 @@ private:
 
 
 public:
-    Pea_find_scc3(const BaseGraph &baseGraph, unsigned int g_numVertices, unsigned int g_numEdges);
+    Pea_find_scc3(unsigned int g_numVertices, unsigned int g_numEdges);
 
     void run();
 

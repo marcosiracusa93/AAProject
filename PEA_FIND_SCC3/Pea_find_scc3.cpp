@@ -5,6 +5,10 @@
 #include <iostream>
 #include "Pea_find_scc3.hpp"
 
+#include <boost/graph/random.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/graph/graphml.hpp>
+
 unsigned long long min_sp = 0;
 
 unsigned long long get_sp(void) {
@@ -17,18 +21,18 @@ void update_max_sp(void) {
 }
 
 
-Pea_find_scc3::Pea_find_scc3(const BaseGraph &baseGraph, unsigned int g_numVertices, unsigned int g_numEdges) :
+Pea_find_scc3::Pea_find_scc3(unsigned int g_numVertices, unsigned int g_numEdges) :
         scc3Graph(g_numVertices), vS(g_numEdges), iS(g_numEdges),
         index(1), c(g_numVertices - 1), stack_dimension(0) {
 
     boost::property_map<SCC3Graph, vertex_rIndex_t>::type rIndex = get(vertex_rIndex, scc3Graph);
     boost::property_map<SCC3Graph, vertex_isRoot_t>::type isRoot = get(vertex_isRoot, scc3Graph);
 
-    typedef boost::graph_traits<BaseGraph>::edge_iterator edge_iter;
-    std::pair<edge_iter, edge_iter> ep;
-    for (ep = boost::edges(baseGraph); ep.first != ep.second; ++ep.first) {
-        boost::add_edge(boost::source(*ep.first, baseGraph), boost::target(*ep.first, baseGraph), scc3Graph);
-    }
+    // Randomize the graph
+    scc3Graph.clear();
+    boost::mt19937 rng;
+    rng.seed(uint32_t(time(0)));
+    boost::generate_random_graph(scc3Graph, g_numVertices, g_numEdges, rng, false, true);
 
     // Graph initialization
     for (int i = 0; i < g_numVertices; i++) {

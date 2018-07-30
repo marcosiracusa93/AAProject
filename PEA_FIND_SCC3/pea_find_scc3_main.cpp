@@ -4,7 +4,6 @@
 
 
 #include <boost/graph/random.hpp>
-#include <boost/random/mersenne_twister.hpp>
 #include <boost/timer/timer.hpp>
 #include <boost/graph/graphml.hpp>
 
@@ -35,19 +34,12 @@ int main(int argc, char **argv) {
     g_numEdges = (unsigned int) strtol(argv[2], NULL, 10);
     g_path = argv[3];
 
-    // Read the graph from .xml file
-    std::ifstream inputGraph;
-    BaseGraph graph;
-    inputGraph.open(g_path, std::ifstream::in);
-    boost::dynamic_properties dp;
-    boost::read_graphml(inputGraph, graph, dp);
-
     unsigned long long stack_dimension = 0;
     boost::timer::cpu_times times;
     times.clear();
 
     // Initialize algorithm's class
-    Pea_find_scc3 scc_algorithm = Pea_find_scc3(graph, g_numVertices, g_numEdges);
+    Pea_find_scc3 scc_algorithm = Pea_find_scc3(g_numVertices, g_numEdges);
 
     // Initialize timer
     boost::timer::cpu_timer timer;
