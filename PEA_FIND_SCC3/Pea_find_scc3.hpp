@@ -38,8 +38,8 @@ class Pea_find_scc3 {
 
 private:
     SCC3Graph scc3Graph;
-    DoubleStackVec vS;
-    DoubleStackVec iS;
+    DoubleStackVec<Vertex> vS;
+    DoubleStackVec<int> iS;
     int index;
     int c;
     unsigned long long stack_dimension;
@@ -55,19 +55,17 @@ public:
     unsigned long long getStackDimension();
 
 private:
-    void visit(int v);
+    void visit(Vertex v);
 
     void visitLoop();
 
-    void beginVisiting(int v);
+    void beginVisiting(Vertex v);
 
-    void finishVisiting(int v);
+    void finishVisiting(Vertex v);
 
-    bool beginEdge(int v, int k);
+    bool beginEdge(Vertex v, int k, boost::graph_traits<BaseGraph>::out_edge_iterator it);
 
-    void finishEdge(int v, int k);
-
-    unsigned int getTargetVertex(int v, int k);
+    void finishEdge(Vertex v, int k, boost::graph_traits<BaseGraph>::out_edge_iterator it);
 };
 
 

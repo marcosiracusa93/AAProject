@@ -16,4 +16,6 @@ extern unsigned int g_numEdges;
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> BaseGraph;
 
+typedef typename boost::graph_traits<BaseGraph>::vertex_descriptor Vertex;
+
 #endif //AAPROJECT_TYPEDEFS_HPP

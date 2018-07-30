@@ -56,7 +56,7 @@ void Pea_find_scc3::run() {
         if (boost::get(rIndex, *vp.first) == 0) {
             boost::property_map<SCC3Graph, boost::vertex_index_t>::type vertex_id = boost::get(boost::vertex_index,
                                                                                                scc3Graph);
-            visit(boost::get(vertex_id, *vp.first));
+            visit(*vp.first);
         }
     }
 
@@ -66,7 +66,7 @@ void Pea_find_scc3::run() {
     }
 }
 
-void Pea_find_scc3::visit(int v) {
+void Pea_find_scc3::visit(Vertex v) {
     beginVisiting(v);
 
     while (!vS.isEmptyFront()) {
@@ -78,7 +78,7 @@ void Pea_find_scc3::visit(int v) {
 }
 
 void Pea_find_scc3::visitLoop() {
-    int v = vS.topFront();
+    Vertex v = vS.topFront();
     int i = iS.topFront();
 
     boost::property_map<SCC3Graph, vertex_rIndex_t>::type rIndex = boost::get(vertex_rIndex, scc3Graph);
@@ -88,23 +88,31 @@ void Pea_find_scc3::visitLoop() {
     typename GraphTraits::out_edge_iterator out_i, out_end;
     typename GraphTraits::edge_descriptor e;
 
+    typename boost::graph_traits<BaseGraph>::degree_size_type out_count;
+    out_count = boost::out_degree(v, scc3Graph);
+
+    boost::graph_traits<BaseGraph>::out_edge_iterator it, it_end;
+    boost::tie(it, it_end) = boost::out_edges(v, scc3Graph);
+
+    /*
     // Count out-edges
     int out_count = 0;
     for (std::tie(out_i, out_end) = boost::out_edges(v, scc3Graph); out_i != out_end; ++out_i) {
         out_count++;
     }
+*/
 
     // Continue traversing out-edges until none left.
     while (i <= out_count) {
         // Continuation
         if (i > 0) {
             // Update status for previously traversed out-edge
-            finishEdge(v, i - 1);
+            finishEdge(v, i - 1, it);
         }
-        if (i < out_count && beginEdge(v, i)) {
+        if (i < out_count && beginEdge(v, i, it)) {
             return;
         }
-        i = i + 1;
+        i++;
     }
 
     // Finished traversing out edges, update component info
@@ -114,7 +122,7 @@ void Pea_find_scc3::visitLoop() {
         update_max_sp();
 }
 
-void Pea_find_scc3::beginVisiting(int v) {
+void Pea_find_scc3::beginVisiting(Vertex v) {
     // First time this node encountered
     vS.pushFront(v);
     iS.pushFront(0);
@@ -123,13 +131,13 @@ void Pea_find_scc3::beginVisiting(int v) {
     boost::property_map<SCC3Graph, vertex_isRoot_t>::type isRoot = boost::get(vertex_isRoot, scc3Graph);
     isRoot[v] = true;
     rIndex[v] = index;
-    index = index + 1;
+    index++;
 
     if (TRACK_STACK_CONSUMPTION)
         update_max_sp();
 }
 
-void Pea_find_scc3::finishVisiting(int v) {
+void Pea_find_scc3::finishVisiting(Vertex v) {
     // Take this vertex off the call stack
     vS.popFront();
     iS.popFront();
@@ -138,14 +146,14 @@ void Pea_find_scc3::finishVisiting(int v) {
     boost::property_map<SCC3Graph, vertex_rIndex_t>::type rIndex = boost::get(vertex_rIndex, scc3Graph);
     boost::property_map<SCC3Graph, vertex_isRoot_t>::type isRoot = boost::get(vertex_isRoot, scc3Graph);
     if (isRoot[v]) {
-        index = index - 1;
+        index--;
         while (!vS.isEmptyBack() && rIndex[v] <= rIndex[vS.topBack()]) {
-            int w = vS.popBack();
-            rIndex[w] = c;
-            index = index - 1;
+            Vertex vv = vS.popBack();
+            rIndex[vv] = c;
+            index--;
         }
         rIndex[v] = c;
-        c = c - 1;
+        c--;
     } else {
         vS.pushBack(v);
     }
@@ -154,14 +162,15 @@ void Pea_find_scc3::finishVisiting(int v) {
         update_max_sp();
 }
 
-bool Pea_find_scc3::beginEdge(int v, int k) {
+bool Pea_find_scc3::beginEdge(Vertex v, int k, boost::graph_traits<BaseGraph>::out_edge_iterator it) {
     boost::property_map<SCC3Graph, vertex_rIndex_t>::type rIndex = boost::get(vertex_rIndex, scc3Graph);
 
-    unsigned int w = getTargetVertex(v, k);
-    if (rIndex[w] == 0) {
+    Vertex vv = target(*(it + k), scc3Graph);
+
+    if (rIndex[vv] == 0) {
         iS.popFront();
         iS.pushFront(k + 1);
-        beginVisiting(w);
+        beginVisiting(vv);
 
         if (TRACK_STACK_CONSUMPTION)
             update_max_sp();
@@ -174,42 +183,19 @@ bool Pea_find_scc3::beginEdge(int v, int k) {
 
 }
 
-void Pea_find_scc3::finishEdge(int v, int k) {
+void Pea_find_scc3::finishEdge(Vertex v, int k, boost::graph_traits<BaseGraph>::out_edge_iterator it) {
     boost::property_map<SCC3Graph, vertex_rIndex_t>::type rIndex = boost::get(vertex_rIndex, scc3Graph);
     boost::property_map<SCC3Graph, vertex_isRoot_t>::type isRoot = boost::get(vertex_isRoot, scc3Graph);
 
-    int w = getTargetVertex(v, k);
+    Vertex vv = target(*(it + k), scc3Graph);
 
-    if (rIndex[w] < rIndex[v]) {
-        rIndex[v] = rIndex[w];
+    if (rIndex[vv] < rIndex[v]) {
+        rIndex[v] = rIndex[vv];
         isRoot[v] = false;
     }
 
     if (TRACK_STACK_CONSUMPTION)
         update_max_sp();
-}
-
-unsigned int Pea_find_scc3::getTargetVertex(int v, int k) {
-    typedef boost::graph_traits<SCC3Graph> GraphTraits;
-    typename GraphTraits::out_edge_iterator out_i, out_end;
-    typename GraphTraits::edge_descriptor e;
-
-    unsigned int w = 0;
-
-    // Count out-endges
-    int out_count = 0;
-    for (std::tie(out_i, out_end) = boost::out_edges(v, scc3Graph); out_i != out_end; ++out_i) {
-        if (k == out_count) {
-            w = boost::target(*out_i, scc3Graph);
-        }
-
-        out_count++;
-    }
-
-    if (TRACK_STACK_CONSUMPTION)
-        update_max_sp();
-
-    return w;
 }
 
 void Pea_find_scc3::getSCCResult(unsigned int *scc3) {

@@ -5,14 +5,17 @@
 #ifndef AAPROJECT_DOUBLESTACKVEC_HPP
 #define AAPROJECT_DOUBLESTACKVEC_HPP
 
+#include "typedefs.hpp"
+
+template<class T>
 class DoubleStackVec {
 
 private:
-    std::vector<int> frontStack;
-    std::vector<int> backStack;
+    std::vector<T> frontStack;
+    std::vector<T> backStack;
 
 public:
-    DoubleStackVec(int capacity) : frontStack(std::vector<int>()), backStack(std::vector<int>()) {}
+    DoubleStackVec(int capacity) : frontStack(std::vector<T>()), backStack(std::vector<T>()) {}
 
     // ============================
     // Front stack
@@ -22,17 +25,17 @@ public:
         return frontStack.size() == 0;
     }
 
-    int topFront() {
+    T topFront() {
         return frontStack.at(frontStack.size() - 1);
     }
 
-    int popFront() {
-        int ret = topFront();
+    T popFront() {
+        T ret = topFront();
         frontStack.pop_back();
         return ret;
     }
 
-    void pushFront(int item) {
+    void pushFront(T item) {
         frontStack.push_back(item);
     }
 
@@ -44,17 +47,17 @@ public:
         return backStack.size() == 0;
     }
 
-    int topBack() {
+    T topBack() {
         return backStack.at(backStack.size() - 1);
     }
 
-    int popBack() {
-        int ret = topBack();
+    T popBack() {
+        T ret = topBack();
         backStack.pop_back();
         return ret;
     }
 
-    void pushBack(int item) {
+    void pushBack(T item) {
         backStack.push_back(item);
     }
 };
