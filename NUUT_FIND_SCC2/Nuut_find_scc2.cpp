@@ -5,7 +5,11 @@
 #include <iostream>
 #include "Nuut_find_scc2.hpp"
 
-Nuut_find_scc2::Nuut_find_scc2(const BaseGraph &baseGraph, unsigned int g_numVertices) : scc2Graph(g_numVertices) {
+#include <boost/graph/random.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/graph/graphml.hpp>
+
+Nuut_find_scc2::Nuut_find_scc2(unsigned int g_numVertices) : scc2Graph(g_numVertices) {
 
     boost::property_map<SCC2Graph, vertex_inComponent_t >::type inComponent = get(vertex_inComponent, scc2Graph);
     boost::property_map<SCC2Graph, vertex_vRoot_t >::type root = get(vertex_vRoot, scc2Graph);
@@ -14,10 +18,11 @@ Nuut_find_scc2::Nuut_find_scc2(const BaseGraph &baseGraph, unsigned int g_numVer
     typedef boost::graph_traits<BaseGraph>::edge_iterator edge_iter;
     std::pair<edge_iter, edge_iter> ep;
 
-    // Building the graph
-    for (ep = boost::edges(baseGraph); ep.first != ep.second; ++ep.first) {
-        boost::add_edge(boost::source(*ep.first, baseGraph), boost::target(*ep.first, baseGraph), scc2Graph);
-    }
+    // Randomize the graph
+    scc2Graph.clear();
+    boost::mt19937 rng;
+    rng.seed(uint32_t(time(0)));
+    boost::generate_random_graph(scc2Graph, g_numVertices, g_numEdges, rng, false, true);
 
     // Graph properties initialization
     for (int i = 0; i < g_numVertices; i++) {

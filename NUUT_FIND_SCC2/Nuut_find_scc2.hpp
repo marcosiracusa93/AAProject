@@ -45,7 +45,7 @@ private:
 
 
 public:
-    Nuut_find_scc2(const BaseGraph &baseGraph, unsigned int g_numVertices);
+    Nuut_find_scc2(unsigned int g_numVertices);
 
     void run();
 

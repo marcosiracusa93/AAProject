@@ -5,7 +5,11 @@
 #include <iostream>
 #include "Tarj_find_scc1.hpp"
 
-Tarj_find_scc1::Tarj_find_scc1(const BaseGraph &baseGraph, unsigned int g_numVertices) : scc1Graph(g_numVertices) {
+#include <boost/graph/random.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/graph/graphml.hpp>
+
+Tarj_find_scc1::Tarj_find_scc1(unsigned int g_numVertices) : scc1Graph(g_numVertices) {
 
     boost::property_map<SCC1Graph, vertex_inStack_t >::type inStack = get(vertex_inStack, scc1Graph);
     boost::property_map<SCC1Graph, vertex_lowPt_t >::type lowPt = get(vertex_lowPt, scc1Graph);
@@ -15,10 +19,12 @@ Tarj_find_scc1::Tarj_find_scc1(const BaseGraph &baseGraph, unsigned int g_numVer
     typedef boost::graph_traits<BaseGraph>::edge_iterator edge_iter;
     std::pair<edge_iter, edge_iter> ep;
 
-    // Building the graph
-    for (ep = boost::edges(baseGraph); ep.first != ep.second; ++ep.first) {
-        boost::add_edge(boost::source(*ep.first, baseGraph), boost::target(*ep.first, baseGraph), scc1Graph);
-    }
+    // Randomize the graph
+    scc1Graph.clear();
+    boost::mt19937 rng;
+    rng.seed(uint32_t(time(0)));
+    boost::generate_random_graph(scc1Graph, g_numVertices, g_numEdges, rng, false, true);
+
 
     // Graph properties initialization
     for (int i = 0; i < g_numVertices; i++) {
