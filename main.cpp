@@ -7,10 +7,9 @@
 #include <boost/timer/timer.hpp>
 #include <boost/graph/graphml.hpp>
 
-#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <Pea_find_scc3_old.hpp>
 
-#include "utilities/typedefs.hpp"
 #include "PEA_FIND_SCC3/Pea_find_scc3.hpp"
 #include "TARJ_FIND_SCC1/Tarj_find_scc1.hpp"
 #include "NUUT_FIND_SCC2/Nuut_find_scc2.hpp"
@@ -42,167 +41,121 @@ int main(int argc, char **argv) {
     // Get the id of the algorithm the user wants to run
     char algorithm = argv[4][0];
 
-    // Read the graph from .xml file
-    std::ifstream inputGraph;
     BaseGraph graph;
-    inputGraph.open(g_path, std::ifstream::in);
-    boost::dynamic_properties dp;
-    boost::read_graphml(inputGraph, graph, dp);
 
-    // Optionally print edges in the verbose_stream
-    if (PRINT_EDGES) {
-        verbose_stream << std::endl << "edges(g) = ";
-
-        // Instantiate property map for accessing the index id
-        boost::property_map<BaseGraph, boost::vertex_index_t>::type vertex_id = boost::get(boost::vertex_index, graph);
-        // Instantiate an edge iterator
-        boost::graph_traits<BaseGraph>::edge_iterator ei, ei_end;
-
-        // Iterate through the edges and print
-        for (boost::tie(ei, ei_end) = boost::edges(graph); ei != ei_end; ++ei) {
-            verbose_stream << "(" << get(vertex_id, source(*ei, graph))
-                           << "," << get(vertex_id, target(*ei, graph)) << ") ";
-        }
-
-        verbose_stream << std::endl << std::endl;
+    if (g_path != "random") {
+        // Read the graph from .xml file
+        std::ifstream inputGraph;
+        inputGraph.open(g_path, std::ifstream::in);
+        boost::dynamic_properties dp;
+        boost::read_graphml(inputGraph, graph, dp);
+    } else {
+        // Randomize the graph
+        graph.clear();
+        boost::mt19937 rng;
+        rng.seed(uint32_t(time(0)));
+        boost::generate_random_graph(graph, g_numVertices, g_numEdges, rng, false, true);
     }
 
-    std::string algorithm_name;
+    unsigned int *scc_result_Pear = (unsigned int *) malloc(sizeof(unsigned int) * g_numVertices);
+    unsigned int *scc_result_Pear_old = (unsigned int *) malloc(sizeof(unsigned int) * g_numVertices);
+    unsigned int *scc_result_Nuut = (unsigned int *) malloc(sizeof(unsigned int) * g_numVertices);;
+    unsigned int *scc_result_Tarj = (unsigned int *) malloc(sizeof(unsigned int) * g_numVertices);;
 
-    unsigned int *scc_result = nullptr;
+    Pea_find_scc3 scc_algorithm_Pear = Pea_find_scc3(graph, g_numVertices, g_numEdges);
+    Pea_find_scc3_old scc_algorithm_Pear_old = Pea_find_scc3_old(graph, g_numVertices, g_numEdges);
+    Nuut_find_scc2 scc_algorithm_Nuut = Nuut_find_scc2(graph, g_numVertices);
+    Tarj_find_scc1 scc_algorithm_Tarj = Tarj_find_scc1(graph, g_numVertices);
+
+    scc_algorithm_Pear.run();
+    scc_algorithm_Pear.getSCCResult(scc_result_Pear);
+
+    scc_algorithm_Pear_old.run();
+    scc_algorithm_Pear_old.getSCCResult(scc_result_Pear_old);
+
+    scc_algorithm_Nuut.run();
+    scc_algorithm_Nuut.getSCCResult(scc_result_Nuut);
+
+    scc_algorithm_Tarj.run();
+    scc_algorithm_Tarj.getSCCResult(scc_result_Tarj);
+
+    bool correct = true;
+    for (int v1 = 0; v1 < g_numVertices; v1++) {
+
+        std::vector<int> pearScc = std::vector<int>();
+        for (int v2 = v1; v2 < g_numVertices - v1; v2++) {
+            if (scc_result_Pear[v1] == scc_result_Pear[v2]) {
+                pearScc.push_back(v2);
+            }
+        }
+
+        std::vector<int> pearSccOld = std::vector<int>();
+        for (int v2 = v1; v2 < g_numVertices - v1; v2++) {
+            if (scc_result_Pear_old[v1] == scc_result_Pear_old[v2]) {
+                pearSccOld.push_back(v2);
+            }
+        }
+
+        std::vector<int> tarjScc = std::vector<int>();
+        for (int v2 = v1; v2 < g_numVertices - v1; v2++) {
+            if (scc_result_Tarj[v1] == scc_result_Tarj[v2]) {
+                tarjScc.push_back(v2);
+            }
+        }
+
+        std::vector<int> nuutScc = std::vector<int>();
+        for (int v2 = v1; v2 < g_numVertices - v1; v2++) {
+            if (scc_result_Nuut[v1] == scc_result_Nuut[v2]) {
+                nuutScc.push_back(v2);
+            }
+        }
+
+        if (pearScc.size() != pearSccOld.size() or pearSccOld.size() != tarjScc.size() or
+            tarjScc.size() != nuutScc.size()) {
+            correct = false;
+            break;
+        }
+
+        for (int i = 0; i < pearScc.size(); i++) {
+            if (pearScc[i] != pearSccOld[i] or pearSccOld[i] != tarjScc[i] or tarjScc[i] != nuutScc[i]) {
+                correct = false;
+                break;
+            }
+            if (!correct) {
+                break;
+            }
+        }
+    }
+
+    std::cout << "Correctness: " << correct << std::endl << std::endl;
 
     if (PRINT_RESULT) {
-        // Allocate room for the result (a uint, the connected component, for each vertex)
-        scc_result = (unsigned int *) malloc(sizeof(unsigned int) * g_numVertices);
-    }
-
-    unsigned long long stack_dimension = 0;
-    boost::timer::cpu_times times;
-    times.clear();
-
-    // Select the algorithm according to the user input
-    switch (algorithm) {
-        case 'p': { /// Pearce's SCC algorithm
-
-            algorithm_name = "Pearce";
-
-            // Initialize algorithm's class
-            Pea_find_scc3 scc_algorithm = Pea_find_scc3(graph, g_numVertices, g_numEdges);
-
-            // Initialize timer
-            boost::timer::cpu_timer timer;
-
-            // Run the algorithm
-            scc_algorithm.run();
-
-            // Stop timer
-            times = timer.elapsed();
-
-            // Get stack dimension
-            stack_dimension = scc_algorithm.getStackDimension();
-
-            if (PRINT_RESULT) {
-                // Get result
-                scc_algorithm.getSCCResult(scc_result);
-            }
-            break;
+        for (int i = 0; i < g_numVertices; i++) {
+            std::cout << "O:  " << i << " is in cc" << scc_result_Pear_old[i] << std::endl;
         }
 
-        case 'n': { /// Nuutila's Scc algorithm
+        std::cout << std::endl;
 
-            algorithm_name = "Nuutila";
-
-            Nuut_find_scc2 scc_algorithm = Nuut_find_scc2(graph, g_numVertices);
-
-            boost::timer::cpu_timer timer;
-
-            scc_algorithm.run();
-
-            times = timer.elapsed();
-
-            if (PRINT_RESULT) {
-                // Get result
-                scc_algorithm.getSCCResult(scc_result);
-            }
-            break;
+        for (int i = 0; i < g_numVertices; i++) {
+            std::cout << "P:  " << i << " is in cc" << scc_result_Pear[i] << std::endl;
         }
 
-        case 't': { /// Tarjan's Scc algorithm
+        std::cout << std::endl;
 
-            algorithm_name = "Tarjan";
-
-            Tarj_find_scc1 scc_algorithm = Tarj_find_scc1(graph, g_numVertices);
-
-            boost::timer::cpu_timer timer;
-
-            scc_algorithm.run();
-
-            times = timer.elapsed();
-
-            if (PRINT_RESULT) {
-                // Get result
-                scc_algorithm.getSCCResult(scc_result);
-            }
-            break;
+        for (int i = 0; i < g_numVertices; i++) {
+            std::cout << "N:  " << i << " is in cc" << scc_result_Nuut[i] << std::endl;
         }
 
-        case 's': { /// Skip
-            /// This case is only meant to run the main() in order to record its space complexity
-            return 0;
+        std::cout << std::endl;
+
+        for (int i = 0; i < g_numVertices; i++) {
+            std::cout << "T:  " << i << " is in cc" << scc_result_Tarj[i] << std::endl;
         }
-
-        default:
-            std::cout << "Wrong algorithm" << std::endl;
-            exit(-1);
     }
 
-    if (PRINT_VERBOSE && PRINT_MEASUREMENTS) {
-        std::cout << "Cannot print both whole data and measurements" << std::endl;
-        exit(-1);
-    }
+    free(scc_result_Pear);
+    free(scc_result_Nuut);
+    free(scc_result_Tarj);
 
-    // Select the stream according on what the user wants to print:
-    //  - measurements_stream    -> time and stack consumption (to be used with the script)
-    //  - verbose_stream  -> wall, user and system time of the current run, stack consumption and, optionally, the algorithm's result
-
-
-    if (PRINT_MEASUREMENTS) {
-        boost::property_tree::ptree root;
-        root.put("elapsed_time", times.wall);
-        root.put("stack_dimension", stack_dimension);
-
-        std::stringstream sstream;
-
-        boost::property_tree::write_json(sstream, root);
-
-        // Save wall time and stack consumption in the measurements_stream
-        measurements_stream << sstream.str() << std::endl;
-
-        std::cout << measurements_stream.str();
-    }
-
-    if (PRINT_VERBOSE) {
-        verbose_stream << "*** " << algorithm_name << "_find_scc: " << std::endl << std::endl;
-
-        // Print times in the verbose_stream
-        verbose_stream << " Recorded times[ns]: " << std::endl;
-        verbose_stream << "  Wall: " << times.wall << std::endl;
-        verbose_stream << "  User: " << times.user << std::endl;
-        verbose_stream << "  System: " << times.system << std::endl << std::endl;
-
-        verbose_stream << " Stack consumption: " << stack_dimension << std::endl << std::endl;
-
-        // Optionally print the result
-        if (PRINT_RESULT) {
-            for (int i = 0; i < g_numVertices; i++)
-                verbose_stream << "  " << i << " is in cc" << scc_result[i] << std::endl;
-
-            // Free memory allocated for results
-            free(scc_result);
-        }
-
-        std::cout << verbose_stream.str();
-    }
-
-    return 0;
+    return correct;
 }

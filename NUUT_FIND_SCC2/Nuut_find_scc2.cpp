@@ -36,6 +36,32 @@ Nuut_find_scc2::Nuut_find_scc2(unsigned int g_numVertices) : scc2Graph(g_numVert
     candidate_stack.push(-1);
 }
 
+Nuut_find_scc2::Nuut_find_scc2(const BaseGraph &baseGraph, unsigned int g_numVertices) : scc2Graph(g_numVertices) {
+
+    boost::property_map<SCC2Graph, vertex_inComponent_t>::type inComponent = get(vertex_inComponent, scc2Graph);
+    boost::property_map<SCC2Graph, vertex_vRoot_t>::type root = get(vertex_vRoot, scc2Graph);
+    boost::property_map<SCC2Graph, vertex_scc_t>::type scc = get(vertex_scc, scc2Graph);
+
+    typedef boost::graph_traits<BaseGraph>::edge_iterator edge_iter;
+    std::pair<edge_iter, edge_iter> ep;
+
+    // Building the graph
+    for (ep = boost::edges(baseGraph); ep.first != ep.second; ++ep.first) {
+        boost::add_edge(boost::source(*ep.first, baseGraph), boost::target(*ep.first, baseGraph), scc2Graph);
+    }
+
+    // Graph properties initialization
+    for (int i = 0; i < g_numVertices; i++) {
+        boost::put(root, i, -1);
+        boost::put(inComponent, i, false);
+        boost::put(scc, i, 0);
+    }
+    visit_index = 0;
+
+    // Stack initialization
+    candidate_stack.push(-1);
+}
+
 void Nuut_find_scc2::run() {
     typedef boost::graph_traits<SCC2Graph>::vertex_iterator vertex_iter;
     std::pair<vertex_iter, vertex_iter> vp;

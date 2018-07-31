@@ -2,8 +2,8 @@
 // Created by Marco Siracusa on 5/28/18.
 //
 
-#ifndef AAPROJECT_PEA_FIND_SCC3_HPP
-#define AAPROJECT_PEA_FIND_SCC3_HPP
+#ifndef AAPROJECT_PEA_FIND_SCC3_OLD_HPP
+#define AAPROJECT_PEA_FIND_SCC3_OLD_HPP
 
 
 #include <boost/pending/property.hpp>
@@ -38,11 +38,11 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS, RIndex
 
 #endif //PEA_DEF
 
-class Pea_find_scc3 {
+class Pea_find_scc3_old {
 
 private:
     SCC3Graph scc3Graph;
-    DoubleStackVec<Vertex> vS;
+    DoubleStackVec<int> vS;
     DoubleStackVec<int> iS;
     int index;
     int c;
@@ -50,9 +50,7 @@ private:
 
 
 public:
-    Pea_find_scc3(unsigned int g_numVertices, unsigned int g_numEdges);
-
-    Pea_find_scc3(const BaseGraph &baseGraph, unsigned int g_numVertices, unsigned int g_numEdges);
+    Pea_find_scc3_old(const BaseGraph &baseGraph, unsigned int g_numVertices, unsigned int g_numEdges);
 
     void run();
 
@@ -61,18 +59,20 @@ public:
     unsigned long long getStackDimension();
 
 private:
-    void visit(Vertex v);
+    void visit(int v);
 
     void visitLoop();
 
-    void beginVisiting(Vertex v);
+    void beginVisiting(int v);
 
-    void finishVisiting(Vertex v);
+    void finishVisiting(int v);
 
-    bool beginEdge(Vertex v, int k, boost::graph_traits<BaseGraph>::out_edge_iterator it);
+    bool beginEdge(int v, int k);
 
-    void finishEdge(Vertex v, int k, boost::graph_traits<BaseGraph>::out_edge_iterator it);
+    void finishEdge(int v, int k);
+
+    unsigned int getTargetVertex(int v, int k);
 };
 
 
-#endif //AAPROJECT_PEA_FIND_SCC3_HPP
+#endif //AAPROJECT_PEA_FIND_SCC3_OLD_HPP

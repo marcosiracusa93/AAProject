@@ -55,6 +55,8 @@ private:
 public:
     Tarj_find_scc1(unsigned int g_numVertices);
 
+    Tarj_find_scc1(const BaseGraph &baseGraph, unsigned int g_numVertices);
+
     void run();
 
     void getSCCResult(unsigned int *scc3);

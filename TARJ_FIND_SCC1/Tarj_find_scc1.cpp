@@ -41,6 +41,36 @@ Tarj_find_scc1::Tarj_find_scc1(unsigned int g_numVertices) : scc1Graph(g_numVert
     ancestor = (bool *) malloc(sizeof(bool) * g_numVertices);
 }
 
+Tarj_find_scc1::Tarj_find_scc1(const BaseGraph &baseGraph, unsigned int g_numVertices) : scc1Graph(g_numVertices) {
+
+    boost::property_map<SCC1Graph, vertex_inStack_t>::type inStack = get(vertex_inStack, scc1Graph);
+    boost::property_map<SCC1Graph, vertex_lowPt_t>::type lowPt = get(vertex_lowPt, scc1Graph);
+    boost::property_map<SCC1Graph, vertex_lowVine_t>::type lowVine = get(vertex_lowVine, scc1Graph);
+    boost::property_map<SCC1Graph, vertex_number_t>::type number = get(vertex_number, scc1Graph);
+
+    typedef boost::graph_traits<BaseGraph>::edge_iterator edge_iter;
+    std::pair<edge_iter, edge_iter> ep;
+
+    // Building the graph
+    for (ep = boost::edges(baseGraph); ep.first != ep.second; ++ep.first) {
+        boost::add_edge(boost::source(*ep.first, baseGraph), boost::target(*ep.first, baseGraph), scc1Graph);
+    }
+
+    // Graph properties initialization
+    for (int i = 0; i < g_numVertices; i++) {
+        boost::put(lowPt, i, 0);
+        boost::put(inStack, i, false);
+        boost::put(lowVine, i, 0);
+        boost::put(number, i, 0);
+    }
+
+    index = 0;
+
+    // Stack initialization
+    point_stack.push(-1);   // each node is pushed on the stack at the beginning of visit()
+    ancestor = (bool *) malloc(sizeof(bool) * g_numVertices);
+}
+
 void Tarj_find_scc1::run() {
     typedef boost::graph_traits<SCC1Graph>::vertex_iterator vertex_iter;
     std::pair<vertex_iter, vertex_iter> vp;
