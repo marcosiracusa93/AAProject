@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     times.clear();
 
     // Initialize algorithm's class
-    Pea_find_scc3 scc_algorithm = Pea_find_scc3(graph, g_numVertices, g_numEdges);
+    Pea_find_scc3_old scc_algorithm = Pea_find_scc3_old(graph, g_numVertices, g_numEdges);
 
     // Initialize timer
     boost::timer::cpu_timer timer;

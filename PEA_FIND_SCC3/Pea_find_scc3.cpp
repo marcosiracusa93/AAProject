@@ -32,7 +32,7 @@ Pea_find_scc3::Pea_find_scc3(unsigned int g_numVertices, unsigned int g_numEdges
     scc3Graph.clear();
     boost::mt19937 rng;
     rng.seed(uint32_t(time(0)));
-    boost::generate_random_graph(scc3Graph, g_numVertices, g_numEdges, rng, false, true);
+    boost::generate_random_graph(scc3Graph, g_numVertices, g_numEdges, rng, true, true);
 
     // Graph initialization
     for (int i = 0; i < g_numVertices; i++) {

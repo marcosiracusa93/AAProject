@@ -23,7 +23,7 @@ Tarj_find_scc1::Tarj_find_scc1(unsigned int g_numVertices) : scc1Graph(g_numVert
     scc1Graph.clear();
     boost::mt19937 rng;
     rng.seed(uint32_t(time(0)));
-    boost::generate_random_graph(scc1Graph, g_numVertices, g_numEdges, rng, false, true);
+    boost::generate_random_graph(scc1Graph, g_numVertices, g_numEdges, rng, true, true);
 
 
     // Graph properties initialization

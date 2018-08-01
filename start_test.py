@@ -21,6 +21,7 @@ def get_peaks(filename):
             peak_heap_B = max(peak_heap_B, int(line[11:]))
         elif line[:13] == "mem_stacks_B=":
             peak_stacks_B = max(peak_stacks_B, int(line[13:]))
+    f.close()
 
     return {"peak_heap": peak_heap_B, "peak_stack": peak_stacks_B}
 
@@ -35,17 +36,9 @@ class Run:
         self.a = a  # Algorithm
 
 
-runs = [Run(v=100, e=100, sv=10, se=10, t=2, a='p'),
-        Run(v=100, e=100, sv=10, se=10, t=2, a='n'),
-        Run(v=100, e=100, sv=10, se=10, t=2, a='t')]
-
-
-'''runs1 = [Run(v=500, e=2500, sv=5, se=10, t=10, a='t'),
-         Run(v=500, e=2500, sv=5, se=10, t=10, a='n'),
-         Run(v=500, e=2500, sv=5, se=10, t=10, a='p'),
-         Run(v=2000, e=15000, sv=20, se=100, t=10, a='t'),
-         Run(v=2000, e=15000, sv=20, se=100, t=10, a='n'),
-         Run(v=2000, e=15000, sv=20, se=100, t=10, a='p')]'''
+runs = [Run(v=400, e=10000, sv=50, se=1000, t=1, a='p'),
+        Run(v=400, e=10000, sv=50, se=1000, t=1, a='n'),
+        Run(v=400, e=10000, sv=50, se=1000, t=1, a='t')]
 
 graphPath = "./graphs/graph.xml"
 tarjPath = "./graphs/tarj"
@@ -77,11 +70,6 @@ for run in runs:
         graph_matrix_heap[i] = [0] * uE
 
 
-    '''stack_matrix = [0] * uV
-    for i in range(uV):
-        stack_matrix[i] = [0] * uE'''
-
-
     # Declaring two matrices for least squares
     phi = np.zeros((uV * uE, 2))
     y = np.zeros((uV * uE, 1))
@@ -95,56 +83,41 @@ for run in runs:
         for v in range(0, uV):
             for e in range(0, uE):
                 check_call(['valgrind', '--tool=massif', '--massif-out-file=' + graphOnlyPath,
-                           './cmake-build-debug/graphGenerator',
-                            str((v + 1) * run.sv), str((e + 1) * run.se), graphPath])
+                            './cmake-build-debug/graphGenerator',
+                            str((v+1) * run.sv), str((e+1) * run.se), graphPath])
 
                 # graph only space measurement
                 space_dict = get_peaks(graphOnlyPath)
                 graph_matrix_heap[v][e] += space_dict.get("peak_heap")
 
-
                 if run.a == "t":
                     outputJSON = check_output(
                         ["./cmake-build-debug/tarj_find_scc1_main", str((v + 1) * run.sv), str((e + 1) * run.se), graphPath])
-                    output = json.loads(outputJSON)
-                    elapsedTime = int(output['elapsed_time'])
-
                     # full run of the algorithm, space complexity measured with Massif
                     check_output(['valgrind', '--tool=massif', '--massif-out-file=' + tarjPath,
-                                 './cmake-build-debug/tarj_find_scc1_main', str((v + 1) * run.sv), str((e + 1) * run.se), graphPath])
-
+                                  './cmake-build-debug/tarj_find_scc1_main', str((v + 1) * run.sv), str((e + 1) * run.se), graphPath])
                     space_dict = get_peaks(tarjPath)
-                    heap_matrix[v][e] += space_dict.get("peak_heap")
-                    # stack_matrix[v][e] += space_dict.get("peak_stacks")
 
                 elif run.a == "n":
                     outputJSON = check_output(
                         ["./cmake-build-debug/nuut_find_scc2_main", str((v + 1) * run.sv), str((e + 1) * run.se), graphPath])
-                    output = json.loads(outputJSON)
-                    elapsedTime = int(output['elapsed_time'])
-
                     # full run of the algorithm, space complexity measured with Massif
                     check_output(['valgrind', '--tool=massif', '--massif-out-file=' + nuutPath,
                                   './cmake-build-debug/nuut_find_scc2_main', str((v + 1) * run.sv), str((e + 1) * run.se), graphPath])
-
                     space_dict = get_peaks(nuutPath)
-                    heap_matrix[v][e] += space_dict.get("peak_heap")
-                    # stack_matrix[v][e] += space_dict.get("peak_stacks")
 
                 elif run.a == "p":
                     outputJSON = check_output(
                         ["./cmake-build-debug/pea_find_scc3_main", str((v + 1) * run.sv), str((e + 1) * run.se), graphPath])
-                    output = json.loads(outputJSON)
-                    elapsedTime = int(output['elapsed_time'])
-
                     # full run of the algorithm, space complexity measured with Massif
                     check_output(['valgrind', '--tool=massif', '--massif-out-file=' + peaPath,
                                   './cmake-build-debug/pea_find_scc3_main', str((v + 1) * run.sv), str((e + 1) * run.se), graphPath])
-
                     space_dict = get_peaks(peaPath)
-                    heap_matrix[v][e] += space_dict.get("peak_heap")
-                    # stack_matrix[v][e] += space_dict.get("peak_stacks")
 
+
+                output = json.loads(outputJSON)
+                elapsedTime = int(output['elapsed_time'])
+                heap_matrix[v][e] += space_dict.get("peak_heap")
 
                 # updating matrices for least squares
                 phi[(uE*v)+e, 0] = (v + 1) * run.sv
@@ -157,6 +130,7 @@ for run in runs:
                 bar.update((v + 1) * (e + 1) * (t + 1))
     bar.finish()
 
+
     # Divide the whole element of the matrices by run.t (so to get the average time)
     for v in range(0, uV):
         for e in range(0, uE):
@@ -168,34 +142,30 @@ for run in runs:
 
             diffHeap[v][e] = heap_matrix[v][e] - graph_matrix_heap[v][e]
 
-
     ls_result = ((np.matrix(phi).T * np.matrix(phi)).I * np.matrix(phi).T) * y
-    ls = "complexity: " + str(int(ls_result[0]/run.t)) + "*V + " + str(int(ls_result[1]/run.t)) + "*E"
+    ls = "complexity: " + str(ls_result[0]/run.t) + "*V + " + str(ls_result[1]/run.t) + "*E"
 
     time_data = [go.Surface(z=np.matrix(time_matrix).T)]
-    # stack_data = [go.Surface(z=np.matrix(stack_matrix).T)]
     heap_data = [go.Surface(z=np.matrix(heap_matrix).T)]
     diff_heap_data = [go.Surface(z=np.matrix(diffHeap).T)]
     g_heap_data = [go.Surface(z=np.matrix(graph_matrix_heap).T)]
 
     graph_info = "a: " + run.a + ", V: " + str(run.v) + ", E: " + str(run.e) + \
                  ", SV: " + str(run.sv) + ", SE: " + str(run.se) + ", T: " + str(run.t)
-    time_title = "Elapsed time [ms] <" + graph_info + "> -> " + ls
+
+    time_title = "Elapsed time [ms] <" + graph_info + " -> " + ls
     heap_title = "Max heap size [byte] <" + graph_info
-    # stack_title = "Max stack size [byte] <" + graph_info
     diff_title = "Heap difference <" + graph_info
     g_heap_title = "Max heap size (GRAPH ONLY) [byte] <" + graph_info
 
     time_layout = go.Layout(title=time_title, autosize=True)
     heap_layout = go.Layout(title=heap_title, autosize=True)
-    # stack_layout = go.Layout(title=stack_title, autosize=True)
     diff_layout = go.Layout(title=diff_title, autosize=True)
     g_heap_layout = go.Layout(title=g_heap_title, autosize=True)
 
     time_fig = go.Figure(data=time_data, layout=time_layout)
     heap_fig = go.Figure(data=heap_data, layout=heap_layout)
-    # stack_fig = go.Figure(data=stack_data, layout=stack_layout)
-    diff_fig= go.Figure(data=diff_heap_data, layout=diff_layout)
+    diff_fig = go.Figure(data=diff_heap_data, layout=diff_layout)
     g_heap_fig = go.Figure(data=g_heap_data, layout=g_heap_layout)
 
     py.offline.plot(time_fig,
@@ -206,10 +176,6 @@ for run in runs:
                     filename="space_complexity_graphs/heap_complexity__A" + run.a + "V" + str(run.v) + "E" + str(
                         run.e) + ", SV: " + str(run.sv) + ", SE: " + str(run.se) + "T" + str(run.t) + ".html")
 
-    '''py.offline.plot(stack_fig,
-                    filename="space_complexity_graphs/stack_complexity__A" + run.a + "V" + str(run.v) + "E" + str(
-                        run.e) + ", SV: " + str(run.sv) + ", SE: " + str(run.se) + "T" + str(run.t) + ".html")'''
-
     py.offline.plot(diff_fig,
                     filename="space_complexity_graphs/diff_heap_complexity__A" + run.a + "V" + str(run.v) + "E" + str(
                         run.e) + ", SV: " + str(run.sv) + ", SE: " + str(run.se) + "T" + str(run.t) + ".html")
@@ -217,6 +183,7 @@ for run in runs:
     py.offline.plot(g_heap_fig,
                     filename="space_complexity_graphs/heap_complexity(GRAPH ONLY)__A" + run.a + "V" + str(run.v) + "E" + str(
                         run.e) + ", SV: " + str(run.sv) + ", SE: " + str(run.se) + "T" + str(run.t) + ".html")
+
 
 
 

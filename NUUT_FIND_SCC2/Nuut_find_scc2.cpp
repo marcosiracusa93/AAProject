@@ -22,7 +22,7 @@ Nuut_find_scc2::Nuut_find_scc2(unsigned int g_numVertices) : scc2Graph(g_numVert
     scc2Graph.clear();
     boost::mt19937 rng;
     rng.seed(uint32_t(time(0)));
-    boost::generate_random_graph(scc2Graph, g_numVertices, g_numEdges, rng, false, true);
+    boost::generate_random_graph(scc2Graph, g_numVertices, g_numEdges, rng, true, true);
 
     // Graph properties initialization
     for (int i = 0; i < g_numVertices; i++) {
